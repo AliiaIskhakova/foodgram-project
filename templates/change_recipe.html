@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %} Редактирование рецепта {% endblock %}
+
+{% block content %}
+{% load user_filters %}
+
+<main class="main container">
+    <div class="main__header">
+        <h1 class="main__title">Редактирование рецепта</h1>
+    </div>
+
+    <div class="form-container">
+        <form class="form" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form__group">
+                <label for="{{ form.name.id_for_label }}" class="form__label">Название рецепта</label>
+                <div class="form__field-group">
+                    {{ form.title|addclass:"form__input" }}
+                    <span class="form__error">{{ form.title.errors }}</span>
+                </div>
+            </div>
+
+            <div class="form__group">
+                <p class="form__label">Теги</p>
+                <div class="form__field-group">
+                    <div class="tags">
+                        {% for tag in form.fields.tag.choices.queryset  %}
+                        <div class="tags__item">
+                            <input 
+                                type="checkbox" 
+                                name="tag" 
+                                value ="{{ tag.pk }}"
+                                id="id_{{ tag.value }}"
+                                class="tags__checkbox tags__checkbox_style_{{ tag.style }}">
+                            <label for="id_{{ tag.value }}" class="tags__label">{{ tag.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <span class="form__error">{{ form.tag.errors }}</span>
+                </div>
+            </div>
+
+            <div class="form__group">
+                <label for="nameIngredient" class="form__label">Ингредиенты</label>
+                <div class="form__field-group">
+                    <div class="form__field-group-ingredientes">
+                        <div class="form__dropdown">
+                            <input type="text" id="nameIngredient" class="form__input">
+                            <div class="form__dropdown-items"></div>
+                        </div>
+                        <input type="number" id="cantidad" class="form__input" min="0">
+                        <label for="cantidad" class="form__label" id="cantidadVal">шт.</label>
+                    </div>
+
+                    <div class="form__field-group-ingredientes-container"></div> 
+                    
+                    <span class="form__ingredient-link" id="addIng">Добавить ингредиент</span>
+                    <span class="form__error"></span>
+                </div>
+            </div>
+
+            <div class="form__group">
+                <label for="{{ form.cooking_time.id_for_label }}" class="form__label">Время приготовления</label>
+                <div class="form__field-group form__field-group_time">
+                    {{ form.cooking_time|addclass:"form__input" }}
+                    <label for="id_time" class="form__label">минут</label>
+                    <span class="form__error"></span>
+                </div>
+            </div>
+
+            <div class="form__group">
+                <label for="{{ form.text.id_for_label }}" class="form__label">Описание</label>
+                <div class="form__field-group">
+                    {{ form.description|addclass:"form__textarea" }}
+                    <span class="form__error"></span>
+                </div>
+            </div>
+
+            <div class="form__group">
+                <span class="form__label">Загрузить фото</span>
+                <div class="form__field-group">
+                    <label for="id_file" class="form__file-button">Выбрать файл</label>
+                    {{ form.image|addclass:"form__file-button" }}
+                    <span class="form__error"></span>
+                </div>
+            </div>
+
+            <div class="form__footer">
+                <button class="button button_style_blue">Сохранить</button> 
+                <a style="margin-left: 2.5em" href="{% url 'recipes:recipe_delete' recipe.id %}" class="form__ingredient-link">Удалить</a>
+            </div>
+        </form>
+    </div>
+
+
+</main>
+
+<!-- Загрузка статики -->
+{% load static %}
+<link rel="stylesheet" href={% static 'pages/form.css' %}>
+<script src={% static 'js/config/config.js' %}></script>
+<script src={% static 'js/components/Header.js' %}></script>
+<script src={% static 'js/utils/debouncing.js' %}></script>
+<script src={% static 'js/api/Api.js' %}></script>
+<script src={% static 'js/formRecipe.js' %}></script> 
+
+{% endblock %}
