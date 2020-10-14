@@ -10,7 +10,7 @@ def generate_shop_list(request):
     # для кого формируется список покупок
     user = get_object_or_404(User, username=request.user.username)
     # рецепты, ингридиенты которого составят список покупок
-    shop_list = user.owner.all()
+    shop_list = user.purchases.all()
     ingredients = {}  # словарь для списка покупок
 
     for item in shop_list:
@@ -20,18 +20,15 @@ def generate_shop_list(request):
             units = elem.amount
 
             # суммирование кол-ва продуктов, если они дублируются
-            if name in ingredients.keys():
-                ingredients[name] += units
-            else:
-                ingredients[name] = units
+            ingredients[name] = ingredients.get(name, 0) + units
 
     # формирование из словаря удобоваримого списка на выгрузку
-    ingredients_list = []
+    ingredients_download = []
 
     for key, units in ingredients.items():
-        ingredients_list.append(f'{key} - {units}, ')
+        ingredients_download.append(f'{key} - {units}, ')
 
-    return ingredients_list
+    return ingredients_download
 
 
 def get_ingredients(request):

@@ -6,7 +6,7 @@ User = get_user_model()
 
 class Ingredient(models.Model):
     title = models.CharField(
-        max_length=200, verbose_name='Название ингридиента')
+        max_length=200, unique=True, verbose_name='Название ингридиента')
     unit = models.CharField(
         max_length=20, default='', verbose_name='Eдиница измерения')
 
@@ -27,15 +27,15 @@ class Recipe(models.Model):
         User, on_delete=models.CASCADE, related_name='recipes')
     title = models.CharField(max_length=200, verbose_name='Название рецепта')
     image = models.ImageField(
-        upload_to='static/upload_images/', verbose_name='Выбрать файл')
+        upload_to='upload_images/', verbose_name='Выбрать файл')
     description = models.TextField(verbose_name='Рецепт')
     ingredients = models.ManyToManyField(
-        Ingredient, through='Recipeingredient',
+        Ingredient, through='RecipeIngredient',
         through_fields=('recipe', 'ingredient'),
         verbose_name='Ингридиент')
-    tag = models.ManyToManyField(Tag, related_name='tag')
+    tag = models.ManyToManyField(Tag, related_name='recipes_tag')
     cooking_time = models.IntegerField(verbose_name='Время приготовления')
-    slug = models.SlugField(blank=True, null=True)
+    slug = models.SlugField(blank=True, null=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -45,7 +45,7 @@ class Recipe(models.Model):
         ordering = ['-created_at', ]
 
 
-class Recipeingredient(models.Model):
+class RecipeIngredient(models.Model):
     """ связывающая таблица """
     amount = models.PositiveIntegerField(default=0)  # количество ингредиента
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
@@ -58,10 +58,10 @@ class Recipeingredient(models.Model):
 class Favorite(models.Model):
     # кто добавляет в избранное
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='favorite_by', default='')
+        User, on_delete=models.CASCADE, related_name='favorite_by')
     # рецепт, который добавляют в избранное
     recipe = models.ForeignKey(
-        Recipe, on_delete=models.CASCADE, related_name='favorite', default='')
+        Recipe, on_delete=models.CASCADE, related_name='favorite')
 
 
 class Follow(models.Model):
@@ -74,11 +74,12 @@ class Follow(models.Model):
 
     class Meta:
         ordering = ['-id', ]
+        unique_together = ['user', 'author']
 
 
 class Purchase(models.Model):
     # чей список покупок
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='owner')
+        User, on_delete=models.CASCADE, related_name='purchases')
     # рецепт, ингридиенты которого добавлены в список покупок
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)

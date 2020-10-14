@@ -15,7 +15,7 @@
             {% for item in purchases_list %}
             <li class="shopping-list__item" data-id="{{ item.recipe.id }}">
                 <div class="recipe recipe_reverse">
-                    <img src="{{ item.recipe.image.url }}" alt="{{ item.recipe.title }}" class="recipe__image recipe__image_big">
+                    <img src="/{{ item.recipe.image }}" alt="{{ item.recipe.title }}" class="recipe__image recipe__image_big">
                     <h3 class="recipe__title">{{ item.recipe.title }}</h3>
                     <p class="recipe__text"><span class="icon-time"></span> {{ item.recipe.cooking_time }} мин.</p>
                 </div>

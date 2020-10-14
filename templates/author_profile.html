@@ -16,7 +16,7 @@
                         <a
                             id="{{ tag.pk }}"
                             class="tags__checkbox tags__checkbox_style_{{ tag.style }}
-                            {% if tag.title in request.GET|get_filter_values %} tags__checkbox_active {% endif %}"
+                            {% if tag.value in request.GET|get_filter_values %} tags__checkbox_active {% endif %}"
                             href="?{{ request|get_filter_link:tag }}"></a>
                         <span class="tags__label">{{ tag.name }}</span>
                     </li>

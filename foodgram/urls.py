@@ -1,10 +1,9 @@
 """foodgram URL Configuration"""
 
-from django.contrib import admin
-from django.urls import include, path
-from django.contrib.flatpages import views
 from django.conf.urls import handler404, handler500
-
+from django.contrib import admin
+from django.contrib.flatpages import views
+from django.urls import include, path
 
 urlpatterns = [
 
@@ -24,13 +23,13 @@ urlpatterns = [
 urlpatterns += [
     # flatpages
     path(
-        'about-author',
+        'about-author/',
         views.flatpage, {'url': '/about-author/'},
         name='about-author'
         ),
 
     path(
-        'about-spec',
+        'about-spec/',
         views.flatpage, {'url': '/about-spec/'},
         name='about-spec'
         ),

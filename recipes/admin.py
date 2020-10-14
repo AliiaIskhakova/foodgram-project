@@ -1,17 +1,17 @@
 from django.contrib import admin
 
-from .models import Recipe, Ingredient, Recipeingredient, Tag, Favorite,\
-                    Follow, Purchase
+from .models import (Favorite, Follow, Ingredient, Purchase, Recipe,
+                     RecipeIngredient, Tag)
 
 
-class Recipeingredient(admin.TabularInline):
-    model = Recipeingredient
+class RecipeIngredient(admin.TabularInline):
+    model = RecipeIngredient
     extra = 1
 
 
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('title', 'author', 'created_at',)
-    inlines = (Recipeingredient, )
+    inlines = (RecipeIngredient, )
     list_filter = ('title',)
 
 

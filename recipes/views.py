@@ -1,15 +1,15 @@
 import json
-from django.core.cache import cache
-from django.core.paginator import Paginator
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponse
-from django.shortcuts import render, get_object_or_404, redirect
+from django.core.paginator import Paginator
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 
 from .forms import RecipeForm
-from .models import Recipe, Tag, Follow, Favorite, Purchase, Ingredient,\
-    Recipeingredient
+from .models import (Favorite, Follow, Ingredient, Purchase, Recipe,
+                     RecipeIngredient, Tag)
 from .utils import generate_shop_list, get_ingredients
 
 User = get_user_model()
@@ -20,20 +20,16 @@ def index(request):
     all_tags = Tag.objects.all()
     active_index = True  # для подсвечивания активного раздела
 
-    if request.GET.getlist('filters'):
-        tag_value = dict(request.GET)['filters']  # получаю title тэга
-        recipes_list = Recipe.objects.filter(
-            tag__value__in=tag_value).distinct().all()
+    tag_value = request.GET.getlist('filters')
+    if tag_value:
+        recipes = Recipe.objects.filter(
+            tag__value__in=tag_value).distinct()
     else:
-        recipes_list = Recipe.objects.all()
+        recipes = Recipe.objects.all()
 
-    # показывать по 9 записей на странице.
-    paginator = Paginator(recipes_list, 6)
-    # переменная в URL с номером запрошенной страницы
+    paginator = Paginator(recipes, 6)
     page_number = request.GET.get('page')
-    # получить записи с нужным смещением
     page = paginator.get_page(page_number)
-    cache.clear()
 
     return render(request, 'index.html', {
         'page': page, 'paginator': paginator, 'all_tags': all_tags,
@@ -61,24 +57,23 @@ def profile(request, username):
     author = get_object_or_404(User, username=username)  # автор, чья страница
     all_tags = Tag.objects.all()
 
-    if request.GET.getlist('filters'):
-        tag_value = dict(request.GET)['filters']
-        recipes_list = Recipe.objects.filter(
-            tag__value__in=tag_value, author=author).distinct().all()
+    tag_value = request.GET.getlist('filters')
+    if tag_value:
+        recipes = Recipe.objects.filter(
+            tag__value__in=tag_value, author=author).distinct()
     else:
-        recipes_list = Recipe.objects.filter(author=author).all()
+        recipes = Recipe.objects.all()
 
     following = False
     if request.user.is_authenticated:
         following = Follow.objects.filter(
             user=request.user, author=author).exists()
 
-    paginator = Paginator(recipes_list, 6)
+    paginator = Paginator(recipes, 6)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    cache.clear()
 
-    return render(request, "author_profile.html", {
+    return render(request, 'author_profile.html', {
         'page': page, 'paginator': paginator, 'following': following,
         'all_tags': all_tags, 'author': author})
 
@@ -88,16 +83,16 @@ def follow_index(request, username):
     """страница Мои подписки"""
     follow = get_object_or_404(User, username=username)  # кто подписывается
     # авторы, на которых подписан
-    authors_list = Follow.objects.filter(user=follow).all()
+    authors = Follow.objects.filter(user=follow)
     active_follow = True  # для подсвечивания активного раздела
 
-    paginator = Paginator(authors_list, 6)
+    paginator = Paginator(authors, 6)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
 
-    return render(request, "my_follow.html", {
+    return render(request, 'my_follow.html', {
         'page': page, 'paginator': paginator, 'follow': follow,
-        'active_follow': active_follow, 'authors': authors_list})
+        'active_follow': active_follow, 'authors': authors})
 
 
 @login_required
@@ -106,19 +101,17 @@ def favorites_index(request, username):
     all_tags = Tag.objects.all()
     active_favorites = True  # для подсвечивания активного раздела
 
-    if request.GET.getlist('filters'):
-        tag_value = dict(request.GET)['filters']  # получаю title тэга
-        favorites_list = Recipe.objects.filter(
+    tag_value = request.GET.getlist('filters')
+    if tag_value:
+        favorites = Recipe.objects.filter(
             tag__value__in=tag_value, favorite__user__id=request.user.id
-            ).distinct().all()
+            ).distinct()
     else:
-        favorites_list = Recipe.objects.filter(
-            favorite__user__id=request.user.id).all()
+        favorites = Recipe.objects.all()
 
-    paginator = Paginator(favorites_list, 6)
+    paginator = Paginator(favorites, 6)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    cache.clear()
 
     return render(request, 'favorite.html', {
         'page': page, 'paginator': paginator, 'all_tags': all_tags,
@@ -128,43 +121,37 @@ def favorites_index(request, username):
 @login_required
 def purchases_index(request):
     """страница списка покупок"""
-    purchases_list = Purchase.objects.filter(user=request.user).all()
+    purchases = Purchase.objects.filter(user=request.user)
 
     return render(request, 'shop_list.html', {
-        'purchases_list': purchases_list})
+        'purchases': purchases})
 
 
 @login_required
 def new_recipe(request):
     """ создание нового рецепта """
     active_new_recipe = True  # для подсвечивания активного раздела
-
-    if request.method == 'POST':
-        form = RecipeForm(request.POST or None, files=request.FILES or None)
-        # функция, передающая список ингредиентов
-        ingredients = get_ingredients(request)
-
-        if not ingredients:
-            form.add_error(None, 'Добавьте хотя бы один ингредиент')
-        elif form.is_valid():
-            # сохраняем форму, но не отправляем в БД
-            new_recipe = form.save(commit=False)
-            new_recipe.author = request.user  # получаем автора нового рецепта
-            new_recipe.save()  # сохраняем новый рецепт
-
-            # заполнение связной таблицы в БД
-            for item in ingredients:
-                Recipeingredient.objects.create(
-                    amount=ingredients[item],
-                    recipe=new_recipe,
-                    ingredient=Ingredient.objects.get(title=f'{item}'))
-
-            # сохраняем данные для полей м2м (тэги и ингредиенты)
-            form.save_m2m()
-
-            return redirect('recipes:index')
-
     form = RecipeForm(request.POST or None, files=request.FILES or None)
+    # функция, передающая список ингредиентов
+    ingredients = get_ingredients(request)
+
+    if form.is_valid():
+        # сохраняем форму, но не отправляем в БД
+        new_recipe = form.save(commit=False)
+        new_recipe.author = request.user  # получаем автора нового рецепта
+        new_recipe.save()  # сохраняем новый рецепт
+
+        # заполнение связной таблицы в БД
+        for item in ingredients:
+            RecipeIngredient.objects.create(
+                amount=ingredients[item],
+                recipe=new_recipe,
+                ingredient=get_object_or_404(Ingredient, title=f'{item}'))
+
+        # сохраняем данные для полей м2м (тэги и ингредиенты)
+        form.save_m2m()
+        return redirect('recipes:index')
+
     return render(request, 'new_recipe.html', {
         'form': form, 'active_new_recipe': active_new_recipe})
 
@@ -186,34 +173,30 @@ def recipe_edit(request, recipe_id):
     """страница редактирования рецепта"""
     # получаем рецепт, который редактируем
     recipe = get_object_or_404(Recipe, id=recipe_id)
+    form = RecipeForm(request.POST or None, files=request.FILES or None,
+                      instance=recipe)
+    # функция, передающая список ингредиентов
+    ingredients = get_ingredients(request)
 
-    if request.method == "POST":
-        form = RecipeForm(
-            request.POST or None, files=request.FILES or None, instance=recipe)
-        # функция, передающая список ингредиентов
-        ingredients = get_ingredients(request)
-        if form.is_valid():
-            # удаляем ингредиенты, связанные с рецептом
-            Recipeingredient.objects.filter(recipe=recipe).delete()
-            # сохраняем форму, но не отправляем в БД
-            recipe = form.save(commit=False)
-            recipe.author = request.user  # получаем автора рецепта
-            recipe.save()  # сохраняем изменения
+    if form.is_valid():
+        # удаляем ингредиенты, связанные с рецептом
+        RecipeIngredient.objects.filter(recipe=recipe).delete()
+        # сохраняем форму, но не отправляем в БД
+        recipe = form.save(commit=False)
+        recipe.author = request.user  # получаем автора рецепта
+        recipe.save()  # сохраняем изменения
 
-            # заполнение связной таблицы обновленным списком ингредиентов
-            for item in ingredients:
-                Recipeingredient.objects.create(
-                    amount=ingredients[item],
-                    recipe=recipe,
-                    ingredient=Ingredient.objects.get(title=f'{item}'))
+        # заполнение связной таблицы обновленным списком ингредиентов
+        for item in ingredients:
+            RecipeIngredient.objects.create(
+                amount=ingredients[item],
+                recipe=recipe,
+                ingredient=get_object_or_404(Ingredient, title=f'{item}'))
 
-            # сохраняем данные для полей м2м (тэги и ингредиенты)
-            form.save_m2m()
+        # сохраняем данные для полей м2м (тэги и ингредиенты)
+        form.save_m2m()
+        return redirect('recipes:index')
 
-            return redirect('recipes:index')
-
-    form = RecipeForm(
-        request.POST or None, files=request.FILES or None, instance=recipe)
     return render(request, 'change_recipe.html', {
         'form': form, 'recipe': recipe})
 
@@ -240,13 +223,8 @@ class Subscribe(View):
         # получаем пользователя, на которого хотим подписаться
         author = get_object_or_404(User, id=author_id)
 
-        # если фолловер не совпадает с пользователем,
-        # на которого хочет подписаться и не подписан на него
-        if request.user != author and Follow.objects.filter(
-                            user=request.user, author=author).count() == 0:
-            # создаем подписку
-            Follow.objects.create(user=request.user, author=author)
-            return JsonResponse({'success': True})
+        Follow.objects.get_or_create(user=request.user, author=author)
+        return JsonResponse({'success': True})
 
     def delete(self, request, author_id):
         """ отписка от пользователя """
@@ -254,7 +232,7 @@ class Subscribe(View):
         author = get_object_or_404(User, id=author_id)
         # удаляем из подписок фолловера пользователя,
         # от которого хотим отписаться
-        Follow.objects.filter(user=request.user, author=author).all().delete()
+        Follow.objects.filter(user=request.user, author=author).delete()
         return JsonResponse({'success': True})
 
 
@@ -268,12 +246,8 @@ class Favorites(View):
         # получаем рецепт, который хотим добавить в избранное
         recipe = get_object_or_404(Recipe, id=recipe_id)
 
-        # если рецепта еще нет в избранном, добавляем его
-        if Favorite.objects.filter(
-                                user=request.user, recipe=recipe).count() == 0:
-            Favorite.objects.create(user=request.user, recipe=recipe)
-            return JsonResponse({'success': True})
-        return JsonResponse({'success': False})
+        Favorite.objects.get_or_create(user=request.user, recipe=recipe)
+        return JsonResponse({'success': True})
 
     def delete(self, request, recipe_id):
         """ удаление из избранного """
@@ -281,7 +255,7 @@ class Favorites(View):
         recipe = get_object_or_404(Recipe, id=recipe_id)
         # удаляем рецепт из избранного текущего пользователя
         Favorite.objects.filter(user=request.user, recipe=recipe
-                                ).all().delete()
+                                ).delete()
         return JsonResponse({'success': True})
 
 
@@ -296,12 +270,8 @@ class Purchases(View):
         # получаем рецепт, ингредиенты которого хотим добавить в список покупок
         recipe = get_object_or_404(Recipe, id=recipe_id)
 
-        # если рецепт еще не в списке покупок
-        if Purchase.objects.filter(
-                                user=request.user, recipe=recipe).count() == 0:
-            # добавляем его в список покупок
-            Purchase.objects.create(user=request.user, recipe=recipe)
-            return JsonResponse({'success': True})
+        Purchase.objects.get_or_create(user=request.user, recipe=recipe)
+        return JsonResponse({'success': True})
 
     def delete(self, request, recipe_id):
         """ удаление из списка покупок """
@@ -309,7 +279,7 @@ class Purchases(View):
         recipe = get_object_or_404(Recipe, id=recipe_id)
         # удаляем рецепт из списка покупок
         Purchase.objects.filter(
-            user=request.user, recipe=recipe).all().delete()
+            user=request.user, recipe=recipe).delete()
         return JsonResponse({'success': True})
 
 
@@ -318,7 +288,7 @@ def download(request):
     """скачивание списка покупок"""
     # функция, формирующая список покупок
     result = generate_shop_list(request)
-    filename = 'purchases_list.txt'
+    filename = 'shop_list.txt'
     response = HttpResponse(result, content_type='text/plain')
     response['Content-Disposition'] = 'attachment; filename={0}'.format(
                                                                     filename)
@@ -328,8 +298,8 @@ def download(request):
 def page_not_found(request, exception):
     #  переменная exception содержит отладочную информацию,
     #  выводить её в шаблон пользовательской страницы 404 не нужно
-    return render(request, "misc/404.html", {"path": request.path}, status=404)
+    return render(request, 'misc/404.html', {'path': request.path}, status=404)
 
 
 def server_error(request):
-    return render(request, "misc/500.html", status=500)
+    return render(request, 'misc/500.html', status=500)
