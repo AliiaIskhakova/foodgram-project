@@ -33,7 +33,7 @@ class Recipe(models.Model):
         Ingredient, through='RecipeIngredient',
         through_fields=('recipe', 'ingredient'),
         verbose_name='Ингридиент')
-    tag = models.ManyToManyField(Tag, related_name='recipes_tag')
+    tag = models.ManyToManyField(Tag, related_name='recipes')
     cooking_time = models.IntegerField(verbose_name='Время приготовления')
     slug = models.SlugField(blank=True, null=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
