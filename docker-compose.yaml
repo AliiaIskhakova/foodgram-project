@@ -1,15 +1,16 @@
-version: "3.8"
+version: "3.3"
 
 volumes:
   postgres_data:
 
 services:
   db:
-    image: postgres:latest
+    image: library/postgres:12.4
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
       - ./.env
+    environment:
   web:
     build: .
     restart: always
@@ -21,10 +22,11 @@ services:
     volumes:
       - ./static:/code/static
   nginx:
-    build: ./nginx
+    image: library/nginx:1.19.2
     depends_on:
       - web
     ports:
       - 80:80
     volumes:
+      - ./config/nginx:/etc/nginx/conf.d
       - ./static:/var/www/foodgram/static
