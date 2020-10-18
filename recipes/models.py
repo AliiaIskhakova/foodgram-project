@@ -10,6 +10,9 @@ class Ingredient(models.Model):
     unit = models.CharField(
         max_length=20, default='', verbose_name='Eдиница измерения')
 
+    def __str__(self):
+        return self.title
+
 
 class Tag(models.Model):
     value = models.CharField('Значение на английском', max_length=50)

@@ -62,7 +62,7 @@ def profile(request, username):
         recipes = Recipe.objects.filter(
             tag__value__in=tag_value, author=author).distinct()
     else:
-        recipes = Recipe.objects.all()
+        recipes = Recipe.objects.filter(author=author)
 
     following = False
     if request.user.is_authenticated:
@@ -107,7 +107,7 @@ def favorites_index(request, username):
             tag__value__in=tag_value, favorite__user__id=request.user.id
             ).distinct()
     else:
-        favorites = Recipe.objects.all()
+        favorites = Recipe.objects.filter(favorite__user__id=request.user.id)
 
     paginator = Paginator(favorites, 6)
     page_number = request.GET.get('page')
