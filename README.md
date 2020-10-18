@@ -4,7 +4,11 @@ Foodgram — база рецептов. Здесь можно создавать
 
 ### Стэк используемых технологий
 
-
+Django,
+PostgreSQL,
+Nginx,
+Gunicorn, 
+Docker (docker-compose).
 
 ### Как развернуть проект с помощью docker-compose
 
