@@ -32,4 +32,4 @@ services:
     ports:
       - "80:80"
     volumes:
-      - static_volume:/code/recipes/static
+      - static_volume:/code/static
