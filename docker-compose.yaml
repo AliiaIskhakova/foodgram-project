@@ -2,6 +2,7 @@ version: "3.7"
 
 volumes:
   postgres_data:
+  static_volume:
 
 services:
   db:
@@ -9,7 +10,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      - ./.env
+      - foodgram/.env
   web:
     container_name: foodgram
     image: "39a785f638b7/foodgram:v1"
@@ -19,9 +20,9 @@ services:
     depends_on:
       - db
     env_file:
-      - ./.env
+      - foodgram/.env
     volumes:
-      - ./static:/code/static
+      - static_volume:/code/static
     expose:
       - 8000
   nginx:
@@ -31,4 +32,4 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./static:/home/app/static/
+      - static_volume:/var/www/foodgram/static

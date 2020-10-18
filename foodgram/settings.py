@@ -35,8 +35,8 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '178.154.229.110']
 # Application definition
 
 INSTALLED_APPS = [
-    'recipes',
     'users',
+    'recipes',
     'django.contrib.sites',
     'django.contrib.flatpages',
     'django.contrib.admin',
@@ -90,7 +90,14 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {
-    'default': env.db(),
+    'default': {
+	"ENGINE": os.environ.get("DB_ENGINE"),
+	"NAME": os.environ.get("DB_NAME"),
+	"USER": os.environ.get("DB_USER", "user"),
+	"PASSWORD": os.environ.get("DB_PASSWORD", "password"),
+	"HOST":  os.environ.get("DB_HOST", "localhost"),
+	"PORT": os.environ.get("DB_PORT", "5432"),
+}
 }
 
 
@@ -129,9 +136,8 @@ SITE_ID = 1
 
 
 STATIC_URL = '/static/'
-STATIC_ROOT = (
-    os.path.join(BASE_DIR, 'static'),
-)
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'staticfiles/'),)
 
 # Login
 
