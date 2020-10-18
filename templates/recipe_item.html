@@ -3,7 +3,7 @@
       
 <div class="card" data-id={{ recipe.id }}>
         <!-- Отображение картинки -->
-        <a href="{% url 'recipes:recipe_single' recipe.author.username recipe.id %}" class="link" target="_blank"><img src="/{{ recipe.image.url }}" class="card__image"></a>
+        <a href="{% url 'recipes:recipe_single' recipe.author.username recipe.id %}" class="link" target="_blank"><img src="/static/{{ recipe.image.url }}" class="card__image"></a>
 
         <!-- Карточка рецепта -->
         <div class="card__body">
