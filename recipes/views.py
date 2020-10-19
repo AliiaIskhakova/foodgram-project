@@ -230,10 +230,8 @@ def purchases_delete(request, recipe_id):
     # получаем рецепт, который хотим удалить
     recipe = get_object_or_404(Recipe, id=recipe_id)
 
-    # если текущий юзер является автором рецепта, то удаляем рецепт
-    # из списка
-    if request.user == recipe.author:
-        Purchase.objects.filter(user=request.user, recipe=recipe
+    # удаляем рецепт из списка
+    Purchase.objects.filter(user=request.user, recipe=recipe
                                 ).delete()
 
     return redirect('recipes:purchases_index')
