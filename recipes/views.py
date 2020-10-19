@@ -288,9 +288,10 @@ class Purchases(View):
         """ удаление из списка покупок """
         # находим рецепт, который хотим удалить из списка покупок
         recipe = get_object_or_404(Recipe, id=recipe_id)
-        # удаляем рецепт из списка покупок
-        Purchase.objects.filter(
-            user=request.user, recipe=recipe).delete()
+        # удаляем искомый рецепт из списка текущего юзера
+        Purchase.objects.filter(user=request.user, recipe=recipe
+                                ).delete()
+
         return JsonResponse({'success': True})
 
 
