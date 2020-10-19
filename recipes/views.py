@@ -131,28 +131,32 @@ def purchases_index(request):
 def new_recipe(request):
     """ создание нового рецепта """
     active_new_recipe = True  # для подсвечивания активного раздела
+
+    if request.method == 'POST':
+        form = RecipeForm(request.POST or None, files=request.FILES or None)
+        # функция, передающая список ингредиентов
+        ingredients = get_ingredients(request)
+
+        if not ingredients: 
+            form.add_error(None, 'Добавьте хотя бы один ингредиент')
+        elif form.is_valid():
+            # сохраняем форму, но не отправляем в БД
+            new_recipe = form.save(commit=False)
+            new_recipe.author = request.user  # получаем автора нового рецепта
+            new_recipe.save()  # сохраняем новый рецепт
+
+            # заполнение связной таблицы в БД
+            for item in ingredients:
+                RecipeIngredient.objects.create(
+                    amount=ingredients[item],
+                    recipe=new_recipe,
+                    ingredient=get_object_or_404(Ingredient, title=f'{item}'))
+
+            # сохраняем данные для полей м2м (тэги и ингредиенты)
+            form.save_m2m()
+            return redirect('recipes:index')
+    
     form = RecipeForm(request.POST or None, files=request.FILES or None)
-    # функция, передающая список ингредиентов
-    ingredients = get_ingredients(request)
-
-    if not ingredients: 
-        form.add_error(None, 'Добавьте хотя бы один ингредиент')
-    elif form.is_valid():
-        # сохраняем форму, но не отправляем в БД
-        new_recipe = form.save(commit=False)
-        new_recipe.author = request.user  # получаем автора нового рецепта
-        new_recipe.save()  # сохраняем новый рецепт
-
-        # заполнение связной таблицы в БД
-        for item in ingredients:
-            RecipeIngredient.objects.create(
-                amount=ingredients[item],
-                recipe=new_recipe,
-                ingredient=get_object_or_404(Ingredient, title=f'{item}'))
-
-        # сохраняем данные для полей м2м (тэги и ингредиенты)
-        form.save_m2m()
-        return redirect('recipes:index')
 
     return render(request, 'new_recipe.html', {
         'form': form, 'active_new_recipe': active_new_recipe})
@@ -175,31 +179,34 @@ def recipe_edit(request, recipe_id):
     """страница редактирования рецепта"""
     # получаем рецепт, который редактируем
     recipe = get_object_or_404(Recipe, id=recipe_id)
+
+    if request.method == "POST":
+        form = RecipeForm(request.POST or None, files=request.FILES or None,
+                        instance=recipe)
+        # функция, передающая список ингредиентов
+        ingredients = get_ingredients(request)
+
+        if form.is_valid():
+            # удаляем ингредиенты, связанные с рецептом
+            RecipeIngredient.objects.filter(recipe=recipe).delete()
+            # сохраняем форму, но не отправляем в БД
+            recipe = form.save(commit=False)
+            recipe.author = request.user  # получаем автора рецепта
+            recipe.save()  # сохраняем изменения
+
+            # заполнение связной таблицы обновленным списком ингредиентов
+            for item in ingredients:
+                RecipeIngredient.objects.create(
+                    amount=ingredients[item],
+                    recipe=recipe,
+                    ingredient=get_object_or_404(Ingredient, title=f'{item}'))
+
+            # сохраняем данные для полей м2м (тэги и ингредиенты)
+            form.save_m2m()
+            return redirect('recipes:index')
+
     form = RecipeForm(request.POST or None, files=request.FILES or None,
                       instance=recipe)
-    # функция, передающая список ингредиентов
-    ingredients = get_ingredients(request)
-
-    if not ingredients: 
-        form.add_error(None, 'Добавьте хотя бы один ингредиент')
-    elif form.is_valid():
-        # удаляем ингредиенты, связанные с рецептом
-        RecipeIngredient.objects.filter(recipe=recipe).delete()
-        # сохраняем форму, но не отправляем в БД
-        recipe = form.save(commit=False)
-        recipe.author = request.user  # получаем автора рецепта
-        recipe.save()  # сохраняем изменения
-
-        # заполнение связной таблицы обновленным списком ингредиентов
-        for item in ingredients:
-            RecipeIngredient.objects.create(
-                amount=ingredients[item],
-                recipe=recipe,
-                ingredient=get_object_or_404(Ingredient, title=f'{item}'))
-
-        # сохраняем данные для полей м2м (тэги и ингредиенты)
-        form.save_m2m()
-        return redirect('recipes:index')
 
     return render(request, 'change_recipe.html', {
         'form': form, 'recipe': recipe})
