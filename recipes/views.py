@@ -138,7 +138,7 @@ def new_recipe(request):
         ingredients = get_ingredients(request)
 
         if not ingredients: 
-            form.add_error(None, 'Добавьте хотя бы один ингредиент')
+            form.add_error(ingredients, 'Добавьте хотя бы один ингредиент')
         elif form.is_valid():
             # сохраняем форму, но не отправляем в БД
             new_recipe = form.save(commit=False)
@@ -222,6 +222,19 @@ def recipe_delete(request, recipe_id):
         recipe.delete()
 
     return redirect('recipes:index')
+
+def purchases_delete(request, recipe_id):
+    """ удаление рецепта из списка покупок """
+    # получаем рецепт, который хотим удалить
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+
+    # если текущий юзер является автором рецепта, то удаляем рецепт
+    # из списка
+    if request.user == recipe.author:
+        Purchase.objects.filter(user=request.user, recipe=recipe
+                                ).delete()
+
+    return redirect('recipes:purchases_index')
 
 
 class Subscribe(View):

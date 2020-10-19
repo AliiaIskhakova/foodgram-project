@@ -30,6 +30,8 @@ urlpatterns = [
     path('', views.index, name="index"),
     # страница списка покупок
     path('purchases/', views.purchases_index, name='purchases_index'),
+    # удаление рецепта из списка покупок
+    path('purchases/<int:recipe_id>', views.purchases_delete, name='purchases_delete'),
     # скачивание списка покупок
     path('download/', views.download, name='download'),
     # страница автора рецептов

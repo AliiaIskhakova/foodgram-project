@@ -59,15 +59,7 @@
                     <div class="form__field-group-ingredientes-container">
                     </div>
                     <span class="form__ingredient-link" id="addIng">Добавить ингредиент</span>
-                    <span class="form__error">
-                        {% if form.non_field_errors %}
-                            <div class="non-field-errors">
-                            {% for error in form.non_field_errors %}
-                                <p class="form-error">{{ error }}</p>
-                            {% endfor %}
-                            </div>
-                        {% endif %}
-                    </span>
+                    <span class="form__error">{{ form.ingredients.errors }}</span>
                 </div>
             </div>
 
