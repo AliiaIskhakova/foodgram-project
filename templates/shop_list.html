@@ -15,11 +15,11 @@
             {% for item in purchases %}
             <li class="shopping-list__item" data-id="{{ item.recipe.id }}">
                 <div class="recipe recipe_reverse">
-                    <img src="/static/{{ item.recipe.image }}" alt="{{ item.recipe.title }}" class="recipe__image recipe__image_big">
+                    <img src="{{ item.recipe.image }}" alt="{{ item.recipe.title }}" class="recipe__image recipe__image_big">
                     <h3 class="recipe__title">{{ item.recipe.title }}</h3>
                     <p class="recipe__text"><span class="icon-time"></span> {{ item.recipe.cooking_time }} мин.</p>
                 </div>
-                <a href="{% url 'recipes:remove_purchases' item.recipe.id %}" class="shopping-list__button link">Удалить</a>
+                <a href="" class="shopping-list__button link">Удалить</a>
             </li>
             {% endfor %}
 
