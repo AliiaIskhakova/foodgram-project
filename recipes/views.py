@@ -155,8 +155,8 @@ def new_recipe(request):
             # сохраняем данные для полей м2м (тэги и ингредиенты)
             form.save_m2m()
             return redirect('recipes:index')
-    
-    form = RecipeForm(request.POST or None, files=request.FILES or None)
+    else:
+        form = RecipeForm(request.POST or None, files=request.FILES or None)
 
     return render(request, 'new_recipe.html', {
         'form': form, 'active_new_recipe': active_new_recipe})
@@ -186,7 +186,9 @@ def recipe_edit(request, recipe_id):
         # функция, передающая список ингредиентов
         ingredients = get_ingredients(request)
 
-        if form.is_valid():
+        if not ingredients: 
+            form.add_error(None, 'Добавьте хотя бы один ингредиент')
+        elif form.is_valid():
             # удаляем ингредиенты, связанные с рецептом
             RecipeIngredient.objects.filter(recipe=recipe).delete()
             # сохраняем форму, но не отправляем в БД
@@ -204,9 +206,9 @@ def recipe_edit(request, recipe_id):
             # сохраняем данные для полей м2м (тэги и ингредиенты)
             form.save_m2m()
             return redirect('recipes:index')
-
-    form = RecipeForm(request.POST or None, files=request.FILES or None,
-                      instance=recipe)
+    else:
+        form = RecipeForm(request.POST or None, files=request.FILES or None,
+                          instance=recipe)
 
     return render(request, 'change_recipe.html', {
         'form': form, 'recipe': recipe})
