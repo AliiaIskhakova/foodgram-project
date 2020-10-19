@@ -23,7 +23,7 @@ services:
     env_file:
       - foodgram/.env
     volumes:
-      - static_volume:/code/recipes/static
+      - static_volume:/code/recipes/static/
       - media_volume:/code/recipes/media/
     expose:
       - 8000
@@ -34,5 +34,5 @@ services:
     ports:
       - "80:80"
     volumes:
-      - static_volume:/code/static
+      - static_volume:/code/static/
       - media_volume:/code/media/
