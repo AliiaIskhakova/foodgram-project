@@ -23,8 +23,8 @@ services:
     env_file:
       - foodgram/.env
     volumes:
-      - static_volume:/code/recipes/static/
-      - media_volume:/code/recipes/media/
+      - static_volume:/code/static/
+      - media_volume:/code/media/
     expose:
       - 8000
   nginx:
