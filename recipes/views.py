@@ -138,7 +138,7 @@ def new_recipe(request):
         ingredients = get_ingredients(request)
 
         if not ingredients: 
-            form.add_error(ingredients, 'Добавьте хотя бы один ингредиент')
+            form.add_error(ingredientsf, 'Добавьте хотя бы один ингредиент')
         elif form.is_valid():
             # сохраняем форму, но не отправляем в БД
             new_recipe = form.save(commit=False)
