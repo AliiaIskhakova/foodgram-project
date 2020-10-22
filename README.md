@@ -28,11 +28,8 @@ docker-compose build
 docker-compose up -d
 ```
 
-4. Создайте и примените миграции в контейнере проекта 
+4. Примените миграции в контейнере проекта 
 
-```
-docker-compose exec web python manage.py makemigrations
-```
 ```
 docker-compose exec web python manage.py migrate
 ```
